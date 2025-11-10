@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { FormField } from "@/components/FormField";
+import { validateLogin } from "@/lib/validation";
 
 export default function LoginPage() {
   const { login, error } = useAuth();
@@ -11,12 +12,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    if (!email || !password) {
-      setFormError("Email y contraseña son requeridos");
+    setErrors([]);
+    const { valid, errors: errs } = validateLogin({ email, password });
+    if (!valid) {
+      setErrors(errs);
+      setFormError("Hay errores de validación");
       return;
     }
     try {
@@ -37,6 +42,13 @@ export default function LoginPage() {
         <FormField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <FormField label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         {formError && <p className="text-sm text-red-600">{formError}</p>}
+        {!!errors.length && (
+          <ul className="text-xs text-red-700 list-disc pl-5 space-y-1">
+            {errors.map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+          </ul>
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button disabled={submitting} className="rounded bg-black text-white px-4 py-2 disabled:opacity-60">
           {submitting ? "Ingresando..." : "Ingresar"}
